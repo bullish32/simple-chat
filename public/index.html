@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Alpha Chat</title>
+  <title>Alpha Dawg Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     * {
@@ -63,7 +63,7 @@
       border-radius: 999px;
       display: inline-block;
       margin-right: 6px;
-      background: #f97316; /* default: connecting */
+      background: #f97316; /* connecting */
     }
 
     .status-text {
@@ -178,7 +178,6 @@
   <div class="chat-wrapper">
     <div class="chat-header">
       <div class="chat-header-left">
-        <!-- Your logo goes here (replace logo.png with your file name) -->
         <img src="logo.png" alt="Logo" class="logo" />
         <div class="chat-header-title">Alpha Dawg Chat</div>
       </div>
@@ -215,6 +214,38 @@
     let ws;
     let myId = Math.random().toString(36).slice(2, 9);
 
+    // Tab flashing variables
+    let hasFocus = true;
+    let baseTitle = "Alpha Dawg Chat";
+    let flashInterval = null;
+
+    window.addEventListener("focus", () => {
+      hasFocus = true;
+      stopFlashingTitle();
+    });
+
+    window.addEventListener("blur", () => {
+      hasFocus = false;
+    });
+
+    function startFlashingTitle() {
+      if (flashInterval) return;
+
+      let showingAlert = false;
+      flashInterval = setInterval(() => {
+        document.title = showingAlert ? baseTitle : "🔔 New Message!";
+        showingAlert = !showingAlert;
+      }, 800);
+    }
+
+    function stopFlashingTitle() {
+      if (flashInterval) {
+        clearInterval(flashInterval);
+        flashInterval = null;
+      }
+      document.title = baseTitle;
+    }
+
     function setStatus(connected) {
       if (connected) {
         statusDot.style.background = '#22c55e';
@@ -237,7 +268,7 @@
 
       ws.addEventListener('close', () => {
         setStatus(false);
-        setTimeout(connect, 2000); // auto reconnect
+        setTimeout(connect, 2000);
       });
 
       ws.addEventListener('message', (event) => {
@@ -245,7 +276,7 @@
           const msg = JSON.parse(event.data);
           addMessage(msg);
         } catch (e) {
-          console.error('Bad message from server:', event.data);
+          console.error('Bad message:', event.data);
         }
       });
     }
@@ -266,7 +297,7 @@
       timeSpan.classList.add('message-time');
       if (time) {
         const d = new Date(time);
-        timeSpan.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        timeSpan.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
       }
 
       header.appendChild(nameSpan);
@@ -278,9 +309,13 @@
 
       wrapper.appendChild(header);
       wrapper.appendChild(body);
-
       messagesEl.appendChild(wrapper);
       messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // Flash tab if new message arrives in background
+      if (id !== myId && !hasFocus) {
+        startFlashingTitle();
+      }
     }
 
     chatForm.addEventListener('submit', (e) => {
