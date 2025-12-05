@@ -130,6 +130,18 @@
       display: flex;
       gap: 8px;
       margin-bottom: 6px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .test-sound-button {
+      border: none;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      background: #6b7280;
+      color: #f9fafb;
+      cursor: pointer;
     }
 
     input[type="text"] {
@@ -175,6 +187,9 @@
   </style>
 </head>
 <body>
+  <!-- Audio element for ding sound -->
+  <audio id="msg-sound" src="ding.mp3" preload="auto"></audio>
+
   <div class="chat-wrapper">
     <div class="chat-header">
       <div class="chat-header-left">
@@ -192,6 +207,7 @@
     <div class="chat-footer">
       <div class="name-row">
         <input type="text" id="name-input" placeholder="Your name" />
+        <button type="button" class="test-sound-button" id="test-sound-button">Test sound</button>
       </div>
       <form id="chat-form">
         <div class="message-row">
@@ -210,6 +226,8 @@
     const sendButton = document.getElementById('send-button');
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
+    const msgSound = document.getElementById('msg-sound');
+    const testSoundButton = document.getElementById('test-sound-button');
 
     let ws;
     let myId = Math.random().toString(36).slice(2, 9);
@@ -281,6 +299,16 @@
       });
     }
 
+    function playSound() {
+      if (!msgSound) return;
+      try {
+        msgSound.currentTime = 0;
+        msgSound.play();
+      } catch (err) {
+        console.warn('Could not play sound:', err.message);
+      }
+    }
+
     function addMessage({ id, name, text, time }) {
       const wrapper = document.createElement('div');
       wrapper.classList.add('message');
@@ -312,9 +340,12 @@
       messagesEl.appendChild(wrapper);
       messagesEl.scrollTop = messagesEl.scrollHeight;
 
-      // Flash tab if new message arrives in background
-      if (id !== myId && !hasFocus) {
-        startFlashingTitle();
+      // For messages from others, alert user
+      if (id !== myId) {
+        if (!hasFocus) {
+          startFlashingTitle();
+        }
+        playSound();
       }
     }
 
@@ -334,6 +365,11 @@
 
       ws.send(JSON.stringify(msg));
       messageInput.value = '';
+    });
+
+    // Test sound button
+    testSoundButton.addEventListener('click', () => {
+      playSound();
     });
 
     connect();
