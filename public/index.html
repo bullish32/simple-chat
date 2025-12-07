@@ -3,35 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <title>Alpha Dawg Chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* Base layout */
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f3f4f6;
-    }
-
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
+      background: #f3f4f6;
+      height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: stretch;
+      align-items: center;
     }
 
-    /* Main wrapper fills the screen, no horizontal overflow */
     .chat-wrapper {
-      height: 100dvh;              /* dynamic height so iPhone adjusts for keyboard */
-      width: 100vw;                /* always full width of the viewport */
-      max-width: 100vw;            /* prevent being wider than screen */
+      width: 100%;
+      max-width: 480px;
+      height: 80vh;
       background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -42,8 +37,9 @@
       background: #111827;
       color: #f9fafb;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
       flex-shrink: 0;
     }
 
@@ -53,21 +49,22 @@
       gap: 8px;
     }
 
+    .chat-header-title {
+      font-weight: 600;
+    }
+
     .logo {
       height: 28px;
       border-radius: 4px;
     }
 
-    .chat-header-title {
-      font-weight: 600;
-    }
-
     .status-dot {
       width: 8px;
       height: 8px;
-      border-radius: 50%;
-      background: #f97316;
-      margin-right: 5px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-right: 6px;
+      background: #f97316; /* connecting */
     }
 
     .status-text {
@@ -77,28 +74,28 @@
 
     .chat-messages {
       flex: 1;
-      overflow-y: auto;
       padding: 12px;
+      overflow-y: auto;
       background: #f9fafb;
-      -webkit-overflow-scrolling: touch;
+      font-size: 14px;
     }
 
     .message {
+      margin-bottom: 8px;
       padding: 6px 10px;
       border-radius: 8px;
       max-width: 80%;
-      margin-bottom: 8px;
       word-wrap: break-word;
     }
 
-    .mine {
-      background: #e5f3ff;
+    .message.mine {
       margin-left: auto;
+      background: #e5f3ff;
     }
 
-    .their {
-      background: #e5e7eb;
+    .message.their {
       margin-right: auto;
+      background: #e5e7eb;
     }
 
     .message-header {
@@ -108,52 +105,347 @@
     }
 
     .message-name {
-      font-size: 12px;
       font-weight: 600;
+      font-size: 12px;
+      color: #111827;
     }
 
     .message-time {
       font-size: 11px;
-      opacity: 0.7;
-      margin-left: 6px;
+      color: #6b7280;
+      margin-left: 8px;
       white-space: nowrap;
     }
 
     .message-text {
-      font-size: 14px;
+      color: #111827;
     }
 
     .typing-indicator {
-      padding: 2px 16px 4px;
+      min-height: 20px;
+      padding: 0 12px 4px 12px;
       font-size: 12px;
-      font-style: italic;
-      min-height: 18px;
       color: #6b7280;
+      font-style: italic;
       flex-shrink: 0;
     }
 
-    /* Footer sticks to bottom and respects iPhone safe area */
     .chat-footer {
-      position: sticky;
-      bottom: 0;
-      background: #f3f4f6;
-      padding: 8px;
-      padding-bottom: env(safe-area-inset-bottom);
       border-top: 1px solid #e5e7eb;
+      padding: 8px;
+      background: #f3f4f6;
       flex-shrink: 0;
     }
 
     .name-row {
       display: flex;
-      align-items: center;
-      gap: 6px;
+      gap: 8px;
       margin-bottom: 6px;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .test-sound-button {
-      padding: 4px 10px;
-      background: #6b7280;
       border: none;
-      color: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
       font-size: 11px;
-      border-radius: 999
+      background: #6b7280;
+      color: #f9fafb;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    input[type="text"] {
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      flex: 1;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+    }
+
+    .message-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .send-button {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #2563eb;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .send-button:disabled {
+      background: #9ca3af;
+      cursor: default;
+    }
+
+    .send-button:not(:disabled):hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+  <!-- Optional ding sound (ding.mp3 in /public) -->
+  <audio id="msg-sound" src="ding.mp3" preload="auto"></audio>
+
+  <div class="chat-wrapper">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <img src="logo.png" alt="Logo" class="logo" />
+        <div class="chat-header-title">Alpha Dawg Chat</div>
+      </div>
+      <div class="chat-header-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-text" id="status-text">Connecting…</span>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="messages"></div>
+    <div class="typing-indicator" id="typing-indicator"></div>
+
+    <div class="chat-footer">
+      <div class="name-row">
+        <input type="text" id="name-input" placeholder="Your name" />
+        <button type="button" class="test-sound-button" id="test-sound-button">Test sound</button>
+      </div>
+      <form id="chat-form">
+        <div class="message-row">
+          <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" />
+          <button type="submit" class="send-button" id="send-button" disabled>Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const nameInput = document.getElementById('name-input');
+    const messageInput = document.getElementById('message-input');
+    const chatForm = document.getElementById('chat-form');
+    const sendButton = document.getElementById('send-button');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const msgSound = document.getElementById('msg-sound');
+    const testSoundButton = document.getElementById('test-sound-button');
+    const typingIndicatorEl = document.getElementById('typing-indicator');
+
+    let ws;
+    let myId = Math.random().toString(36).slice(2, 9);
+
+    // Tab flashing variables
+    let hasFocus = true;
+    let baseTitle = "Alpha Dawg Chat";
+    let flashInterval = null;
+
+    // Typing state
+    let localTyping = false;
+    let localTypingTimeout = null;
+    let remoteTypingTimeout = null;
+
+    window.addEventListener("focus", () => {
+      hasFocus = true;
+      stopFlashingTitle();
+    });
+
+    window.addEventListener("blur", () => {
+      hasFocus = false;
+    });
+
+    function startFlashingTitle() {
+      if (flashInterval) return;
+
+      let showingAlert = false;
+      flashInterval = setInterval(() => {
+        document.title = showingAlert ? baseTitle : "🔔 New Message!";
+        showingAlert = !showingAlert;
+      }, 800);
+    }
+
+    function stopFlashingTitle() {
+      if (flashInterval) {
+        clearInterval(flashInterval);
+        flashInterval = null;
+      }
+      document.title = baseTitle;
+    }
+
+    function setStatus(connected) {
+      if (connected) {
+        statusDot.style.background = '#22c55e';
+        statusText.textContent = 'Connected';
+        sendButton.disabled = false;
+      } else {
+        statusDot.style.background = '#f97316';
+        statusText.textContent = 'Disconnected';
+        sendButton.disabled = true;
+      }
+    }
+
+    function connect() {
+      const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${protocol}://${location.host}`);
+
+      ws.addEventListener('open', () => {
+        setStatus(true);
+      });
+
+      ws.addEventListener('close', () => {
+        setStatus(false);
+        setTimeout(connect, 2000);
+      });
+
+      ws.addEventListener('message', (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'typing') {
+            handleTypingEvent(msg);
+          } else {
+            addMessage(msg);
+          }
+        } catch (e) {
+          console.error('Bad message:', event.data);
+        }
+      });
+    }
+
+    function playSound() {
+      if (!msgSound) return;
+      try {
+        msgSound.currentTime = 0;
+        msgSound.play();
+      } catch (err) {
+        console.warn('Could not play sound:', err.message);
+      }
+    }
+
+    function addMessage({ id, name, text, time, type }) {
+      // ignore non-message just in case
+      if (type && type !== 'message') return;
+
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('message');
+      wrapper.classList.add(id === myId ? 'mine' : 'their');
+
+      const header = document.createElement('div');
+      header.classList.add('message-header');
+
+      const nameSpan = document.createElement('span');
+      nameSpan.classList.add('message-name');
+      nameSpan.textContent = name || 'Anonymous';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.classList.add('message-time');
+      if (time) {
+        const d = new Date(time);
+        timeSpan.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
+      }
+
+      header.appendChild(nameSpan);
+      header.appendChild(timeSpan);
+
+      const body = document.createElement('div');
+      body.classList.add('message-text');
+      body.textContent = text;
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(body);
+      messagesEl.appendChild(wrapper);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // For messages from others, alert user
+      if (id !== myId) {
+        if (!hasFocus) {
+          startFlashingTitle();
+        }
+        playSound();
+      }
+    }
+
+    function handleTypingEvent({ id, name, isTyping }) {
+      if (id === myId) return; // don't show our own typing
+
+      if (isTyping) {
+        typingIndicatorEl.textContent = `${name || 'Someone'} is typing…`;
+        if (remoteTypingTimeout) clearTimeout(remoteTypingTimeout);
+        remoteTypingTimeout = setTimeout(() => {
+          typingIndicatorEl.textContent = '';
+        }, 3000);
+      } else {
+        typingIndicatorEl.textContent = '';
+      }
+    }
+
+    function sendTyping(isTyping) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const name = nameInput.value.trim() || 'Someone';
+      const msg = {
+        type: 'typing',
+        id: myId,
+        name,
+        isTyping: !!isTyping
+      };
+      ws.send(JSON.stringify(msg));
+    }
+
+    messageInput.addEventListener('input', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+      if (!localTyping) {
+        localTyping = true;
+        sendTyping(true);
+      }
+
+      if (localTypingTimeout) clearTimeout(localTypingTimeout);
+      localTypingTimeout = setTimeout(() => {
+        localTyping = false;
+        sendTyping(false);
+      }, 1500);
+    });
+
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = nameInput.value.trim() || 'Anonymous';
+      const text = messageInput.value.trim();
+
+      if (!text || ws.readyState !== WebSocket.OPEN) return;
+
+      const msg = {
+        type: 'message',
+        id: myId,
+        name,
+        text,
+        time: new Date().toISOString()
+      };
+
+      ws.send(JSON.stringify(msg));
+      messageInput.value = '';
+
+      // stop typing when message is sent
+      localTyping = false;
+      sendTyping(false);
+    });
+
+    // Test sound button
+    testSoundButton.addEventListener('click', () => {
+      playSound();
+    });
+
+    connect();
+  </script>
+</body>
+</html>
