@@ -6,27 +6,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <style>
-    /* Prevent body from scrolling on mobile */
+    /* Base layout */
     html, body {
       height: 100%;
-      overflow: hidden;
       margin: 0;
       padding: 0;
+      overflow: hidden;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f3f4f6;
     }
 
-    /* Main wrapper uses dynamic viewport height for iPhone keyboard support */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    /* Main wrapper fills the screen, no horizontal overflow */
     .chat-wrapper {
-      height: 100dvh;
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
+      height: 100dvh;              /* dynamic height so iPhone adjusts for keyboard */
+      width: 100vw;                /* always full width of the viewport */
+      max-width: 100vw;            /* prevent being wider than screen */
       background: #ffffff;
-      border-radius: 0;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
       overflow: hidden;
     }
 
@@ -37,6 +44,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-shrink: 0;
     }
 
     .chat-header-left {
@@ -80,6 +88,7 @@
       border-radius: 8px;
       max-width: 80%;
       margin-bottom: 8px;
+      word-wrap: break-word;
     }
 
     .mine {
@@ -106,17 +115,24 @@
     .message-time {
       font-size: 11px;
       opacity: 0.7;
+      margin-left: 6px;
+      white-space: nowrap;
+    }
+
+    .message-text {
+      font-size: 14px;
     }
 
     .typing-indicator {
-      padding: 4px 16px;
+      padding: 2px 16px 4px;
       font-size: 12px;
       font-style: italic;
-      height: 18px;
+      min-height: 18px;
       color: #6b7280;
+      flex-shrink: 0;
     }
 
-    /* Footer stays visible ABOVE iPhone keyboard */
+    /* Footer sticks to bottom and respects iPhone safe area */
     .chat-footer {
       position: sticky;
       bottom: 0;
@@ -124,14 +140,14 @@
       padding: 8px;
       padding-bottom: env(safe-area-inset-bottom);
       border-top: 1px solid #e5e7eb;
+      flex-shrink: 0;
     }
 
     .name-row {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
       gap: 6px;
+      margin-bottom: 6px;
     }
 
     .test-sound-button {
@@ -140,221 +156,4 @@
       border: none;
       color: #fff;
       font-size: 11px;
-      border-radius: 999px;
-    }
-
-    input[type="text"] {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      font-size: 14px;
-    }
-
-    .message-row {
-      display: flex;
-      gap: 6px;
-    }
-
-    .send-button {
-      background: #2563eb;
-      color: #fff;
-      padding: 6px 14px;
-      border: none;
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-  </style>
-</head>
-
-<body>
-  <audio id="msg-sound" src="ding.mp3" preload="auto"></audio>
-
-  <div class="chat-wrapper">
-    <div class="chat-header">
-      <div class="chat-header-left">
-        <img src="logo.png" class="logo" alt="logo" />
-        <div class="chat-header-title">Alpha Dawg Chat</div>
-      </div>
-      <div>
-        <span class="status-dot" id="status-dot"></span>
-        <span class="status-text" id="status-text">Connecting…</span>
-      </div>
-    </div>
-
-    <div class="chat-messages" id="messages"></div>
-
-    <div class="typing-indicator" id="typing-indicator"></div>
-
-    <div class="chat-footer">
-      <div class="name-row">
-        <input type="text" id="name-input" placeholder="Your name">
-        <button class="test-sound-button" id="test-sound-button">Test sound</button>
-      </div>
-
-      <form id="chat-form">
-        <div class="message-row">
-          <input type="text" id="message-input" placeholder="Type a message…" autocomplete="off">
-          <button type="submit" class="send-button" id="send-button">Send</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-<script>
-  const messagesEl = document.getElementById('messages');
-  const typingIndicator = document.getElementById('typing-indicator');
-  const nameInput = document.getElementById('name-input');
-  const messageInput = document.getElementById('message-input');
-  const msgSound = document.getElementById('msg-sound');
-  const testSoundButton = document.getElementById('test-sound-button');
-
-  let myId = Math.random().toString(36).slice(2, 10);
-  let ws;
-
-  let hasFocus = true;
-  let flashInterval = null;
-  let baseTitle = "Alpha Dawg Chat";
-
-  window.addEventListener("focus", () => {
-    hasFocus = true;
-    stopFlashing();
-  });
-
-  window.addEventListener("blur", () => {
-    hasFocus = false;
-  });
-
-  function flashTab() {
-    if (flashInterval) return;
-    let toggle = false;
-    flashInterval = setInterval(() => {
-      document.title = toggle ? baseTitle : "🔔 New Message!";
-      toggle = !toggle;
-    }, 800);
-  }
-
-  function stopFlashing() {
-    if (!flashInterval) return;
-    clearInterval(flashInterval);
-    flashInterval = null;
-    document.title = baseTitle;
-  }
-
-  function connect() {
-    const protocol = location.protocol === "https:" ? "wss" : "ws";
-    ws = new WebSocket(`${protocol}://${location.host}`);
-
-    ws.onopen = () => {
-      document.getElementById("status-dot").style.background = "#22c55e";
-      document.getElementById("status-text").textContent = "Connected";
-    };
-
-    ws.onclose = () => {
-      document.getElementById("status-dot").style.background = "#f97316";
-      document.getElementById("status-text").textContent = "Disconnected";
-      setTimeout(connect, 1500);
-    };
-
-    ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-
-      if (msg.type === "typing") {
-        handleTyping(msg);
-      } else {
-        addMessage(msg);
-      }
-    };
-  }
-
-  function addMessage({ id, name, text, time }) {
-    const div = document.createElement("div");
-    div.className = "message " + (id === myId ? "mine" : "their");
-
-    const head = document.createElement("div");
-    head.className = "message-header";
-
-    const n = document.createElement("span");
-    n.className = "message-name";
-    n.textContent = name;
-
-    const t = document.createElement("span");
-    t.className = "message-time";
-    t.textContent = new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    head.appendChild(n);
-    head.appendChild(t);
-
-    const body = document.createElement("div");
-    body.className = "message-text";
-    body.textContent = text;
-
-    div.appendChild(head);
-    div.appendChild(body);
-
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-
-    if (id !== myId) {
-      try { msgSound.currentTime = 0; msgSound.play(); } catch(e) {}
-      if (!hasFocus) flashTab();
-    }
-  }
-
-  let typingTimeout = null;
-
-  function handleTyping({ id, name, isTyping }) {
-    if (id === myId) return;
-
-    if (isTyping) {
-      typingIndicator.textContent = `${name} is typing…`;
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => typingIndicator.textContent = "", 3000);
-    } else {
-      typingIndicator.textContent = "";
-    }
-  }
-
-  messageInput.addEventListener("input", () => {
-    sendTyping(true);
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => sendTyping(false), 1500);
-  });
-
-  function sendTyping(isTyping) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    ws.send(JSON.stringify({
-      type: "typing",
-      id: myId,
-      name: nameInput.value || "Someone",
-      isTyping
-    }));
-  }
-
-  document.getElementById("chat-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    ws.send(JSON.stringify({
-      type: "message",
-      id: myId,
-      name: nameInput.value || "Anonymous",
-      text,
-      time: new Date().toISOString()
-    }));
-
-    sendTyping(false);
-    messageInput.value = "";
-  });
-
-  testSoundButton.onclick = () => { 
-    try { msgSound.currentTime = 0; msgSound.play(); } catch(e) {}
-  };
-
-  connect();
-</script>
-
-</body>
-</html>
+      border-radius: 999
