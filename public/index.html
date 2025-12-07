@@ -4,7 +4,36 @@
   <meta charset="UTF-8" />
   <title>Alpha Dawg Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
+    :root {
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --header-bg: #111827;
+      --header-text: #f9fafb;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #e5f3ff;
+      --incoming: #e5e7eb;
+      --border-subtle: #e5e7eb;
+      --coach-border: #f97316;
+    }
+
+    body.dark {
+      --bg: #020617;
+      --card-bg: #020617;
+      --header-bg: #0f172a;
+      --header-text: #e5e7eb;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-soft: #1d4ed8;
+      --incoming: #111827;
+      --border-subtle: #1f2933;
+      --coach-border: #fb923c;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -13,34 +42,35 @@
     }
 
     body {
-      background: #f3f4f6;
+      background: var(--bg);
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      transition: background 0.2s ease;
     }
 
     .chat-wrapper {
       width: 100%;
       max-width: 480px;
       height: 80vh;
-      background: #ffffff;
+      background: var(--card-bg);
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.4);
     }
 
     .chat-header {
       padding: 12px 16px;
-      background: #111827;
-      color: #f9fafb;
+      background: var(--header-bg);
+      color: var(--header-text);
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 14px;
-      flex-shrink: 0;
     }
 
     .chat-header-left {
@@ -72,11 +102,24 @@
       opacity: 0.8;
     }
 
+    .theme-toggle {
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.4);
+      color: var(--header-text);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     .chat-messages {
       flex: 1;
       padding: 12px;
       overflow-y: auto;
-      background: #f9fafb;
+      background: var(--bg);
       font-size: 14px;
     }
 
@@ -86,16 +129,22 @@
       border-radius: 8px;
       max-width: 80%;
       word-wrap: break-word;
+      color: var(--text);
     }
 
     .message.mine {
       margin-left: auto;
-      background: #e5f3ff;
+      background: var(--accent-soft);
     }
 
     .message.their {
       margin-right: auto;
-      background: #e5e7eb;
+      background: var(--incoming);
+    }
+
+    .message.coach-mention {
+      border-left: 3px solid var(--coach-border);
+      box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.15);
     }
 
     .message-header {
@@ -107,34 +156,35 @@
     .message-name {
       font-weight: 600;
       font-size: 12px;
-      color: #111827;
+      color: var(--text);
     }
 
     .message-time {
       font-size: 11px;
-      color: #6b7280;
+      color: var(--muted);
       margin-left: 8px;
       white-space: nowrap;
     }
 
     .message-text {
-      color: #111827;
+      color: var(--text);
     }
 
-    .typing-indicator {
-      min-height: 20px;
-      padding: 0 12px 4px 12px;
-      font-size: 12px;
-      color: #6b7280;
-      font-style: italic;
-      flex-shrink: 0;
+    .coach-badge {
+      margin-left: 8px;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(249, 115, 22, 0.12);
+      color: var(--coach-border);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .chat-footer {
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid var(--border-subtle);
       padding: 8px;
-      background: #f3f4f6;
-      flex-shrink: 0;
+      background: var(--card-bg);
     }
 
     .name-row {
@@ -157,17 +207,40 @@
     }
 
     input[type="text"] {
-      border: 1px solid #d1d5db;
+      border: 1px solid #4b5563;
       border-radius: 999px;
       padding: 6px 10px;
       font-size: 13px;
       flex: 1;
       outline: none;
+      background: rgba(15, 23, 42, 0.04);
+      color: var(--text);
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--muted);
     }
 
     input[type="text"]:focus {
-      border-color: #2563eb;
+      border-color: var(--accent);
       box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+      background: rgba(15, 23, 42, 0.06);
+    }
+
+    .emoji-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .emoji-btn {
+      border: none;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 8px;
+      padding: 4px 6px;
+      font-size: 16px;
+      cursor: pointer;
     }
 
     .message-row {
@@ -182,7 +255,7 @@
       padding: 6px 14px;
       font-size: 13px;
       font-weight: 600;
-      background: #2563eb;
+      background: var(--accent);
       color: #ffffff;
       cursor: pointer;
       transition: background 0.15s ease;
@@ -190,7 +263,7 @@
     }
 
     .send-button:disabled {
-      background: #9ca3af;
+      background: #4b5563;
       cursor: default;
     }
 
@@ -200,7 +273,7 @@
   </style>
 </head>
 <body>
-  <!-- Optional ding sound (ding.mp3 in /public) -->
+  <!-- Sound file (place ding.mp3 in /public next to this file) -->
   <audio id="msg-sound" src="ding.mp3" preload="auto"></audio>
 
   <div class="chat-wrapper">
@@ -209,20 +282,38 @@
         <img src="logo.png" alt="Logo" class="logo" />
         <div class="chat-header-title">Alpha Dawg Chat</div>
       </div>
-      <div class="chat-header-status">
-        <span class="status-dot" id="status-dot"></span>
-        <span class="status-text" id="status-text">Connecting…</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="theme-toggle" id="theme-toggle">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-text">Dark</span>
+        </button>
+        <div class="chat-header-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span class="status-text" id="status-text">Connecting…</span>
+        </div>
       </div>
     </div>
 
     <div class="chat-messages" id="messages"></div>
-    <div class="typing-indicator" id="typing-indicator"></div>
 
     <div class="chat-footer">
       <div class="name-row">
         <input type="text" id="name-input" placeholder="Your name" />
         <button type="button" class="test-sound-button" id="test-sound-button">Test sound</button>
       </div>
+
+      <!-- Emoji shortcuts -->
+      <div class="emoji-row">
+        <button type="button" class="emoji-btn">😀</button>
+        <button type="button" class="emoji-btn">😂</button>
+        <button type="button" class="emoji-btn">🔥</button>
+        <button type="button" class="emoji-btn">👍</button>
+        <button type="button" class="emoji-btn">👏</button>
+        <button type="button" class="emoji-btn">💯</button>
+        <button type="button" class="emoji-btn">🤼‍♂️</button>
+        <button type="button" class="emoji-btn">@coach</button>
+      </div>
+
       <form id="chat-form">
         <div class="message-row">
           <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" />
@@ -242,20 +333,17 @@
     const statusText = document.getElementById('status-text');
     const msgSound = document.getElementById('msg-sound');
     const testSoundButton = document.getElementById('test-sound-button');
-    const typingIndicatorEl = document.getElementById('typing-indicator');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
 
     let ws;
     let myId = Math.random().toString(36).slice(2, 9);
 
-    // Tab flashing variables
+    // Tab flashing
     let hasFocus = true;
     let baseTitle = "Alpha Dawg Chat";
     let flashInterval = null;
-
-    // Typing state
-    let localTyping = false;
-    let localTypingTimeout = null;
-    let remoteTypingTimeout = null;
 
     window.addEventListener("focus", () => {
       hasFocus = true;
@@ -268,7 +356,6 @@
 
     function startFlashingTitle() {
       if (flashInterval) return;
-
       let showingAlert = false;
       flashInterval = setInterval(() => {
         document.title = showingAlert ? baseTitle : "🔔 New Message!";
@@ -312,11 +399,7 @@
       ws.addEventListener('message', (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === 'typing') {
-            handleTypingEvent(msg);
-          } else {
-            addMessage(msg);
-          }
+          addMessage(msg);
         } catch (e) {
           console.error('Bad message:', event.data);
         }
@@ -333,10 +416,7 @@
       }
     }
 
-    function addMessage({ id, name, text, time, type }) {
-      // ignore non-message just in case
-      if (type && type !== 'message') return;
-
+    function addMessage({ id, name, text, time }) {
       const wrapper = document.createElement('div');
       wrapper.classList.add('message');
       wrapper.classList.add(id === myId ? 'mine' : 'their');
@@ -362,6 +442,16 @@
       body.classList.add('message-text');
       body.textContent = text;
 
+      // @coach detection
+      const lower = (text || '').toLowerCase();
+      if (lower.includes('@coach')) {
+        wrapper.classList.add('coach-mention');
+        const badge = document.createElement('span');
+        badge.className = 'coach-badge';
+        badge.textContent = '@coach';
+        header.appendChild(badge);
+      }
+
       wrapper.appendChild(header);
       wrapper.appendChild(body);
       messagesEl.appendChild(wrapper);
@@ -376,47 +466,6 @@
       }
     }
 
-    function handleTypingEvent({ id, name, isTyping }) {
-      if (id === myId) return; // don't show our own typing
-
-      if (isTyping) {
-        typingIndicatorEl.textContent = `${name || 'Someone'} is typing…`;
-        if (remoteTypingTimeout) clearTimeout(remoteTypingTimeout);
-        remoteTypingTimeout = setTimeout(() => {
-          typingIndicatorEl.textContent = '';
-        }, 3000);
-      } else {
-        typingIndicatorEl.textContent = '';
-      }
-    }
-
-    function sendTyping(isTyping) {
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
-      const name = nameInput.value.trim() || 'Someone';
-      const msg = {
-        type: 'typing',
-        id: myId,
-        name,
-        isTyping: !!isTyping
-      };
-      ws.send(JSON.stringify(msg));
-    }
-
-    messageInput.addEventListener('input', () => {
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-      if (!localTyping) {
-        localTyping = true;
-        sendTyping(true);
-      }
-
-      if (localTypingTimeout) clearTimeout(localTypingTimeout);
-      localTypingTimeout = setTimeout(() => {
-        localTyping = false;
-        sendTyping(false);
-      }, 1500);
-    });
-
     chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = nameInput.value.trim() || 'Anonymous';
@@ -425,7 +474,6 @@
       if (!text || ws.readyState !== WebSocket.OPEN) return;
 
       const msg = {
-        type: 'message',
         id: myId,
         name,
         text,
@@ -434,10 +482,6 @@
 
       ws.send(JSON.stringify(msg));
       messageInput.value = '';
-
-      // stop typing when message is sent
-      localTyping = false;
-      sendTyping(false);
     });
 
     // Test sound button
@@ -445,6 +489,44 @@
       playSound();
     });
 
+    // Emoji buttons
+    document.querySelectorAll('.emoji-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.textContent;
+        if (emoji === '@coach') {
+          // ensure a space before @coach if needed
+          if (messageInput.value && !messageInput.value.endsWith(' ')) {
+            messageInput.value += ' ';
+          }
+          messageInput.value += '@coach ';
+        } else {
+          messageInput.value += emoji;
+        }
+        messageInput.focus();
+      });
+    });
+
+    // Dark mode toggle
+    function applyThemeFromStorage() {
+      const saved = localStorage.getItem('alphaDawgTheme') || 'light';
+      if (saved === 'dark') {
+        document.body.classList.add('dark');
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Light';
+      } else {
+        document.body.classList.remove('dark');
+        themeIcon.textContent = '🌙';
+        themeText.textContent = 'Dark';
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.body.classList.toggle('dark');
+      localStorage.setItem('alphaDawgTheme', isDark ? 'dark' : 'light');
+      applyThemeFromStorage();
+    });
+
+    applyThemeFromStorage();
     connect();
   </script>
 </body>
