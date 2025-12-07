@@ -120,6 +120,14 @@
       color: #111827;
     }
 
+    .typing-indicator {
+      min-height: 20px;
+      padding: 0 12px 4px 12px;
+      font-size: 12px;
+      color: #6b7280;
+      font-style: italic;
+    }
+
     .chat-footer {
       border-top: 1px solid #e5e7eb;
       padding: 8px;
@@ -187,7 +195,7 @@
   </style>
 </head>
 <body>
-  <!-- Audio element for ding sound -->
+  <!-- Optional ding sound (ding.mp3) -->
   <audio id="msg-sound" src="ding.mp3" preload="auto"></audio>
 
   <div class="chat-wrapper">
@@ -203,6 +211,7 @@
     </div>
 
     <div class="chat-messages" id="messages"></div>
+    <div class="typing-indicator" id="typing-indicator"></div>
 
     <div class="chat-footer">
       <div class="name-row">
@@ -228,6 +237,7 @@
     const statusText = document.getElementById('status-text');
     const msgSound = document.getElementById('msg-sound');
     const testSoundButton = document.getElementById('test-sound-button');
+    const typingIndicatorEl = document.getElementById('typing-indicator');
 
     let ws;
     let myId = Math.random().toString(36).slice(2, 9);
@@ -236,6 +246,11 @@
     let hasFocus = true;
     let baseTitle = "Alpha Dawg Chat";
     let flashInterval = null;
+
+    // Typing state
+    let localTyping = false;
+    let localTypingTimeout = null;
+    let remoteTypingTimeout = null;
 
     window.addEventListener("focus", () => {
       hasFocus = true;
@@ -292,7 +307,11 @@
       ws.addEventListener('message', (event) => {
         try {
           const msg = JSON.parse(event.data);
-          addMessage(msg);
+          if (msg.type === 'typing') {
+            handleTypingEvent(msg);
+          } else {
+            addMessage(msg);
+          }
         } catch (e) {
           console.error('Bad message:', event.data);
         }
@@ -325,7 +344,7 @@
       timeSpan.classList.add('message-time');
       if (time) {
         const d = new Date(time);
-        timeSpan.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
+        timeSpan.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
       header.appendChild(nameSpan);
@@ -349,6 +368,47 @@
       }
     }
 
+    function handleTypingEvent({ id, name, isTyping }) {
+      if (id === myId) return; // don't show our own typing
+
+      if (isTyping) {
+        typingIndicatorEl.textContent = `${name || 'Someone'} is typing…`;
+        if (remoteTypingTimeout) clearTimeout(remoteTypingTimeout);
+        remoteTypingTimeout = setTimeout(() => {
+          typingIndicatorEl.textContent = '';
+        }, 3000);
+      } else {
+        typingIndicatorEl.textContent = '';
+      }
+    }
+
+    function sendTyping(isTyping) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const name = nameInput.value.trim() || 'Anonymous';
+      const msg = {
+        type: 'typing',
+        id: myId,
+        name,
+        isTyping: !!isTyping
+      };
+      ws.send(JSON.stringify(msg));
+    }
+
+    messageInput.addEventListener('input', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+      if (!localTyping) {
+        localTyping = true;
+        sendTyping(true);
+      }
+
+      if (localTypingTimeout) clearTimeout(localTypingTimeout);
+      localTypingTimeout = setTimeout(() => {
+        localTyping = false;
+        sendTyping(false);
+      }, 1500);
+    });
+
     chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = nameInput.value.trim() || 'Anonymous';
@@ -357,6 +417,7 @@
       if (!text || ws.readyState !== WebSocket.OPEN) return;
 
       const msg = {
+        type: 'message',
         id: myId,
         name,
         text,
@@ -365,6 +426,10 @@
 
       ws.send(JSON.stringify(msg));
       messageInput.value = '';
+
+      // stop typing when message is sent
+      localTyping = false;
+      sendTyping(false);
     });
 
     // Test sound button
